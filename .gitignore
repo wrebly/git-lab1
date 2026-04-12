@@ -1,0 +1,28 @@
+# 1. Залежності (Dependencies)
+node_modules/
+
+# 2. Логи (Logs)
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 3. Бази даних та кеш (Databases & Cache)
+*.db
+tandoor_kitchen.db
+tandoor_kitchen.db-shm
+tandoor_kitchen.db-wal
+
+# 4. Секрети та конфігурації оточення (Secrets & Env)
+.env
+.env.test
+.env.production
+.env.local
+
+# 5. Системні файли та налаштування редакторів (OS & IDEs)
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
