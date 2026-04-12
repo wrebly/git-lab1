@@ -12,11 +12,7 @@ const PORT = process.env.PORT || 3000;
 // ─── Initialize Database ───
 initialize();
 
-// ─── Middleware ───
-app.use(cors({ origin: true, credentials: true }));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
+
 
 // ─── Static Files ───
 app.use('/', express.static(path.join(__dirname, 'public')));
