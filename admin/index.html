@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tandoor Kitchen — Admin Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --bg-card: #1a1d27;
+    --bg-hover: #22252f;
+    --bg-input: #13151c;
+    --border: #2a2d3a;
+    --border-light: #353849;
+    --crimson: #dc2626;
+    --crimson-hover: #b91c1c;
+    --gold: #d4a017;
+    --gold-dim: rgba(212,160,23,0.2);
+    --green: #22c55e;
+    --green-dim: rgba(34,197,94,0.15);
+    --blue: #3b82f6;
+    --blue-dim: rgba(59,130,246,0.15);
+    --orange: #f59e0b;
+    --orange-dim: rgba(245,158,11,0.15);
+    --purple: #a855f7;
+    --purple-dim: rgba(168,85,247,0.15);
+    --text: #e4e4e7;
+    --text-dim: #9ca3af;
+    --text-muted: #6b7280;
+    --radius: 8px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.3);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+  /* LOGIN */
+  #loginScreen {
+    display:flex; align-items:center; justify-content:center; min-height:100vh;
+    background:linear-gradient(135deg,#0f1117 0%,#1a0a00 50%,#0f1117 100%);
+  }
+  .login-box {
+    background:var(--bg-card); border:1px solid var(--border); border-radius:12px;
+    padding:3rem; width:100%; max-width:420px; text-align:center;
+  }
+  .login-box h1 { font-size:1.6rem; color:var(--gold); margin-bottom:.3rem; }
+  .login-box .subtitle { color:var(--text-dim); font-size:.85rem; margin-bottom:2rem; }
+  .login-box .form-group { margin-bottom:1.2rem; text-align:left; }
+  .login-box label { display:block; font-size:.75rem; font-weight:600; color:var(--text-dim);
+    text-transform:uppercase; letter-spacing:1px; margin-bottom:.4rem; }
+  .login-box input {
+    width:100%; padding:.75rem 1rem; background:var(--bg-input); border:1px solid var(--border);
+    border-radius:var(--radius); color:var(--text); font-size:.9rem; outline:none; transition:border .2s;
+  }
+  .login-box input:focus { border-color:var(--gold); }
+  .login-box .error { color:var(--crimson); font-size:.82rem; margin-bottom:1rem; display:none; }
+  .login-box button {
+    width:100%; padding:.85rem; background:var(--crimson); color:#fff; border:none;
+    border-radius:var(--radius); font-size:.9rem; font-weight:600; cursor:pointer; transition:background .2s;
+  }
+  .login-box button:hover { background:var(--crimson-hover); }
+
+  /* LAYOUT */
+  #appShell { display:none; }
+  .sidebar {
+    position:fixed; left:0; top:0; bottom:0; width:260px; background:var(--bg-card);
+    border-right:1px solid var(--border); z-index:100; display:flex; flex-direction:column;
+    transition:transform .3s;
+  }
+  .sidebar-brand { padding:1.5rem 1.5rem 1rem; border-bottom:1px solid var(--border); }
+  .sidebar-brand h2 { font-size:1.1rem; color:var(--gold); }
+  .sidebar-brand h2 span { color:var(--crimson); }
+  .sidebar-brand p { font-size:.7rem; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase; margin-top:.2rem; }
+  .sidebar-nav { flex:1; padding:1rem 0; overflow-y:auto; }
+  .nav-item {
+    display:flex; align-items:center; gap:.8rem; padding:.7rem 1.5rem;
+    color:var(--text-dim); font-size:.85rem; cursor:pointer; transition:all .15s;
+    border-left:3px solid transparent; text-decoration:none;
+  }
+  .nav-item:hover { background:var(--bg-hover); color:var(--text); }
+  .nav-item.active { background:rgba(220,38,38,.08); color:var(--crimson); border-left-color:var(--crimson); font-weight:600; }
+  .nav-item .icon { font-size:1.1rem; width:24px; text-align:center; }
+  .nav-item .badge {
+    margin-left:auto; background:var(--crimson); color:#fff; font-size:.65rem;
+    padding:.15rem .5rem; border-radius:10px; font-weight:700;
+  }
+  .sidebar-footer { padding:1rem 1.5rem; border-top:1px solid var(--border); font-size:.78rem; color:var(--text-muted); }
+  .sidebar-footer .user-info { display:flex; align-items:center; gap:.6rem; margin-bottom:.8rem; }
+  .sidebar-footer .avatar {
+    width:32px; height:32px; border-radius:50%; background:var(--crimson);
+    display:flex; align-items:center; justify-content:center; font-size:.8rem; color:#fff; font-weight:700;
+  }
+  .sidebar-footer .logout-btn {
+    background:none; border:1px solid var(--border); color:var(--text-dim);
+    padding:.4rem .8rem; border-radius:var(--radius); font-size:.75rem;
+    cursor:pointer; transition:all .2s; width:100%;
+  }
+  .sidebar-footer .logout-btn:hover { border-color:var(--crimson); color:var(--crimson); }
+
+  .main { margin-left:260px; min-height:100vh; }
+  .topbar {
+    position:sticky; top:0; z-index:50; background:rgba(15,17,23,.9); backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--border); padding:1rem 2rem;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .topbar h1 { font-size:1.3rem; font-weight:600; }
+  .topbar .topbar-actions { display:flex; gap:.8rem; align-items:center; }
+  .topbar .status-badge {
+    display:flex; align-items:center; gap:.4rem; font-size:.78rem; padding:.4rem .8rem;
+    border-radius:20px; font-weight:600; cursor:pointer; border:none; transition:all .2s;
+  }
+  .status-open { background:var(--green-dim); color:var(--green); }
+  .status-closed { background:rgba(220,38,38,.15); color:var(--crimson); }
+  .hamburger-admin { display:none; background:none; border:none; color:var(--text); font-size:1.5rem; cursor:pointer; }
+  .content { padding:2rem; }
+
+  /* CARDS */
+  .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:2rem; }
+  .stat-card {
+    background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius);
+    padding:1.5rem; transition:all .2s;
+  }
+  .stat-card:hover { border-color:var(--border-light); transform:translateY(-2px); }
+  .stat-card .stat-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:.8rem; }
+  .stat-card .stat-label { font-size:.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; }
+  .stat-card .stat-icon { width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1rem; }
+  .stat-card .stat-value { font-size:1.8rem; font-weight:700; line-height:1; }
+  .stat-card .stat-change { font-size:.75rem; color:var(--text-muted); margin-top:.4rem; }
+
+  /* PANELS & TABLES */
+  .panel { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:1.5rem; overflow:hidden; }
+  .panel-header {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:1.2rem 1.5rem; border-bottom:1px solid var(--border);
+  }
+  .panel-header h3 { font-size:1rem; font-weight:600; }
+  .panel-actions { display:flex; gap:.6rem; align-items:center; flex-wrap:wrap; }
+  .search-input {
+    padding:.5rem .8rem; background:var(--bg-input); border:1px solid var(--border);
+    border-radius:var(--radius); color:var(--text); font-size:.82rem; outline:none; min-width:200px;
+  }
+  .search-input:focus { border-color:var(--gold); }
+  .filter-select {
+    padding:.5rem .8rem; background:var(--bg-input); border:1px solid var(--border);
+    border-radius:var(--radius); color:var(--text); font-size:.82rem; outline:none;
+  }
+  .btn {
+    padding:.5rem 1rem; border:none; border-radius:var(--radius); font-size:.82rem;
+    font-weight:600; cursor:pointer; transition:all .2s; display:inline-flex; align-items:center; gap:.4rem;
+  }
+  .btn-red { background:var(--crimson); color:#fff; }
+  .btn-red:hover { background:var(--crimson-hover); }
+  .btn-gold { background:var(--gold); color:#000; }
+  .btn-gold:hover { opacity:.9; }
+  .btn-ghost { background:transparent; color:var(--text-dim); border:1px solid var(--border); }
+  .btn-ghost:hover { border-color:var(--text); color:var(--text); }
+  .btn-sm { padding:.35rem .7rem; font-size:.75rem; }
+
+  table { width:100%; border-collapse:collapse; }
+  thead th {
+    text-align:left; padding:.8rem 1rem; font-size:.72rem; font-weight:600;
+    color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;
+    background:rgba(255,255,255,.02); border-bottom:1px solid var(--border);
+  }
+  tbody td { padding:.8rem 1rem; font-size:.85rem; border-bottom:1px solid rgba(255,255,255,.04); vertical-align:middle; }
+  tbody tr:hover { background:var(--bg-hover); }
+
+  .badge-status { display:inline-block; padding:.2rem .6rem; border-radius:4px; font-size:.7rem; font-weight:600; text-transform:capitalize; }
+  .badge-pending { background:var(--orange-dim); color:var(--orange); }
+  .badge-confirmed { background:var(--blue-dim); color:var(--blue); }
+  .badge-seated { background:var(--purple-dim); color:var(--purple); }
+  .badge-completed { background:var(--green-dim); color:var(--green); }
+  .badge-cancelled { background:rgba(220,38,38,.15); color:var(--crimson); }
+  .badge-no_show { background:rgba(107,114,128,.2); color:var(--text-muted); }
+  .badge-paid { background:var(--green-dim); color:var(--green); }
+  .badge-unpaid { background:var(--orange-dim); color:var(--orange); }
+  .badge-refunded { background:var(--blue-dim); color:var(--blue); }
+  .badge-received { background:var(--orange-dim); color:var(--orange); }
+  .badge-preparing { background:var(--blue-dim); color:var(--blue); }
+  .badge-ready { background:var(--purple-dim); color:var(--purple); }
+  .badge-out_for_delivery { background:var(--blue-dim); color:var(--blue); }
+  .badge-delivered { background:var(--green-dim); color:var(--green); }
+  .badge-dine_in { background:var(--gold-dim); color:var(--gold); }
+  .badge-delivery { background:var(--blue-dim); color:var(--blue); }
+  .badge-takeaway { background:var(--purple-dim); color:var(--purple); }
+  .badge-active { background:var(--green-dim); color:var(--green); }
+  .badge-disabled { background:rgba(220,38,38,.15); color:var(--crimson); }
+
+  .action-btn { background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:.82rem; padding:.3rem; transition:color .2s; }
+  .action-btn:hover { color:var(--gold); }
+  .action-btn.danger:hover { color:var(--crimson); }
+  .empty-state { text-align:center; padding:3rem; color:var(--text-muted); }
+  .empty-state .icon { font-size:3rem; margin-bottom:.5rem; }
+
+  /* MODAL */
+  .modal-overlay {
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:200;
+    align-items:center; justify-content:center; backdrop-filter:blur(4px);
+  }
+  .modal-overlay.open { display:flex; }
+  .modal-box {
+    background:var(--bg-card); border:1px solid var(--border); border-radius:12px;
+    width:95%; max-width:580px; max-height:90vh; overflow-y:auto;
+  }
+  .modal-head {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:1.5rem; border-bottom:1px solid var(--border);
+  }
+  .modal-head h3 { font-size:1.05rem; font-weight:600; }
+  .modal-close { background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer; }
+  .modal-close:hover { color:var(--text); }
+  .modal-body { padding:1.5rem; }
+  .modal-foot { padding:1rem 1.5rem; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:.6rem; }
+
+  .form-group { margin-bottom:1rem; }
+  .form-group label { display:block; font-size:.75rem; font-weight:600; color:var(--text-dim); margin-bottom:.4rem; }
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    width:100%; padding:.6rem .8rem; background:var(--bg-input); border:1px solid var(--border);
+    border-radius:var(--radius); color:var(--text); font-size:.85rem; outline:none;
+    transition:border .2s; font-family:'Inter',sans-serif;
+  }
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus { border-color:var(--gold); }
+  .form-group textarea { resize:vertical; min-height:80px; }
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+  .form-group select option { background:var(--bg-card); }
+
+  /* PAGES */
+  .page { display:none; }
+  .page.active { display:block; animation:fadeIn .3s ease; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+  /* TOAST */
+  .tk-toast {
+    position:fixed; top:1.5rem; right:1.5rem; background:var(--bg-card); border:1px solid var(--border);
+    color:var(--text); padding:1rem 1.5rem; border-radius:var(--radius); font-size:.85rem;
+    z-index:9999; transform:translateX(120%); transition:transform .3s; box-shadow:var(--shadow);
+    display:flex; align-items:center; gap:.6rem; max-width:400px;
+  }
+  .tk-toast.show { transform:translateX(0); }
+  .tk-toast.success { border-left:3px solid var(--green); }
+  .tk-toast.error { border-left:3px solid var(--crimson); }
+
+  /* RESPONSIVE */
+  @media(max-width:1024px) { .stats-grid { grid-template-columns:repeat(2,1fr); } }
+  @media(max-width:768px) {
+    .sidebar { transform:translateX(-100%); }
+    .sidebar.open { transform:translateX(0); }
+    .main { margin-left:0; }
+    .hamburger-admin { display:block; }
+    .stats-grid { grid-template-columns:1fr; }
+    .form-row { grid-template-columns:1fr; }
+    table { font-size:.78rem; }
+    thead th, tbody td { padding:.6rem .5rem; }
+    .panel-header { flex-direction:column; gap:.8rem; align-items:flex-start; }
+    .panel-actions { width:100%; }
+    .search-input { min-width:0; flex:1; }
+  }
+  ::-webkit-scrollbar { width:5px; }
+  ::-webkit-scrollbar-track { background:var(--bg); }
+  ::-webkit-scrollbar-thumb { background:var(--border-light); border-radius:3px; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <h1>🔥 Tandoor Kitchen</h1>
+    <p class="subtitle">Admin Dashboard</p>
+    <div class="error" id="loginError"></div>
+    <div class="form-group">
+      <label>Email Address</label>
+      <input type="email" id="loginEmail" placeholder="owner@tandoorkitchen.com" value="owner@tandoorkitchen.com">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="loginPassword" placeholder="Enter password">
+    </div>
+    <button onclick="handleLogin()">Sign In</button>
+  </div>
+</div>
+
+<!-- APP SHELL -->
+<div id="appShell">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <h2>Tandoor<span>Kitchen</span></h2>
+      <p>Management Panel</p>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="nav-item active" onclick="navigate('dashboard', this)">
+        <span class="icon">📊</span> Dashboard
+      </a>
+      <a class="nav-item" onclick="navigate('bookings', this)">
+        <span class="icon">📅</span> Bookings
+        <span class="badge" id="pendingBookingsBadge" style="display:none">0</span>
+      </a>
+      <a class="nav-item" onclick="navigate('orders', this)">
+        <span class="icon">🧾</span> Orders
+      </a>
+      <a class="nav-item" onclick="navigate('menu', this)">
+        <span class="icon">📋</span> Menu Manager
+      </a>
+      <a class="nav-item" onclick="navigate('expenses', this)">
+        <span class="icon">💰</span> Expenses
+      </a>
+      <a class="nav-item" onclick="navigate('staff', this)">
+        <span class="icon">👥</span> Staff
+      </a>
+      <a class="nav-item" onclick="navigate('settings', this)">
+        <span class="icon">⚙️</span> Settings
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="avatar" id="userAvatar">O</div>
+        <div>
+          <div style="font-weight:600;color:var(--text);font-size:.82rem" id="userName">Owner</div>
+          <div style="font-size:.7rem" id="userRole">owner</div>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="handleLogout()">Sign Out</button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:1rem">
+        <button class="hamburger-admin" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+        <h1 id="pageTitle">Dashboard</h1>
+      </div>
+      <div class="topbar-actions">
+        <button class="status-badge status-open" id="restaurantStatus" onclick="toggleRestaurantStatus()">
+          <span>●</span> Open Now
+        </button>
+        <a href="/" target="_blank" class="btn btn-ghost btn-sm">View Website ↗</a>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-label">Today's Bookings</span>
+              <div class="stat-icon" style="background:var(--blue-dim);color:var(--blue)">📅</div>
+            </div>
+            <div class="stat-value" id="statTodayBookings">0</div>
+            <div class="stat-change" id="statBookingsDetail">Loading...</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-label">Today's Orders</span>
+              <div class="stat-icon" style="background:var(--green-dim);color:var(--green)">🧾</div>
+            </div>
+            <div class="stat-value" id="statTodayOrders">0</div>
+            <div class="stat-change" id="statOrdersDetail">Loading...</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-label">Today's Revenue</span>
+              <div class="stat-icon" style="background:var(--gold-dim);color:var(--gold)">₹</div>
+            </div>
+            <div class="stat-value" id="statTodayRevenue">₹0</div>
+            <div class="stat-change" id="statRevenueDetail">Loading...</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-label">Monthly Revenue</span>
+              <div class="stat-icon" style="background:var(--purple-dim);color:var(--purple)">📈</div>
+            </div>
+            <div class="stat-value" id="statMonthRevenue">₹0</div>
+            <div class="stat-change" id="statMonthDetail">Loading...</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+          <div class="panel">
+            <div class="panel-header"><h3>Recent Bookings</h3></div>
+            <div id="recentBookingsTable" style="overflow-x:auto">
+              <div class="empty-state"><div class="icon">📅</div><p>No bookings yet</p></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><h3>Recent Activity</h3></div>
+            <div id="recentActivityList" style="max-height:400px;overflow-y:auto;padding:1rem">
+              <div class="empty-state"><div class="icon">📋</div><p>No activity</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOOKINGS -->
+      <div class="page" id="page-bookings">
+        <div class="panel">
+          <div class="panel-header">
+            <h3>All Bookings</h3>
+            <div class="panel-actions">
+              <input type="text" class="search-input" placeholder="Search by name, phone, ref..." id="bookingSearch" oninput="loadBookings()">
+              <select class="filter-select" id="bookingFilter" onchange="loadBookings()">
+                <option value="all">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="seated">Seated</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+                <option value="no_show">No Show</option>
+              </select>
+              <input type="date" class="search-input" style="min-width:auto" id="bookingDateFilter" onchange="loadBookings()">
+            </div>
+          </div>
+          <div style="overflow-x:auto" id="bookingsTableContainer">
+            <div class="empty-state"><div class="icon">📅</div><p>Loading bookings...</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ORDERS -->
+      <div class="page" id="page-orders">
+        <div style="display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap">
+          <button class="btn btn-red" onclick="showNewOrderModal()">+ New Order</button>
+        </div>
+        <div class="panel">
+          <div class="panel-header">
+            <h3>All Orders</h3>
+            <div class="panel-actions">
+              <input type="text" class="search-input" placeholder="Search..." id="orderSearch" oninput="loadOrders()">
+              <select class="filter-select" id="orderStatusFilter" onchange="loadOrders()">
+                <option value="all">All Statuses</option>
+                <option value="received">Received</option>
+                <option value="preparing">Preparing</option>
+                <option value="ready">Ready</option>
+                <option value="out_for_delivery">Out for Delivery</option>
+                <option value="delivered">Delivered</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+              <select class="filter-select" id="orderTypeFilter" onchange="loadOrders()">
+                <option value="all">All Types</option>
+                <option value="dine_in">Dine In</option>
+                <option value="delivery">Delivery</option>
+                <option value="takeaway">Takeaway</option>
+              </select>
+            </div>
+          </div>
+          <div style="overflow-x:auto" id="ordersTableContainer">
+            <div class="empty-state"><div class="icon">🧾</div><p>Loading orders...</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MENU -->
+      <div class="page" id="page-menu">
+        <div style="display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap">
+          <button class="btn btn-red" onclick="showAddItemModal()">+ Add Item</button>
+          <button class="btn btn-gold" onclick="showAddCategoryModal()">+ Add Category</button>
+        </div>
+        <div class="panel">
+          <div class="panel-header">
+            <h3>Menu Items</h3>
+            <div class="panel-actions">
+              <input type="text" class="search-input" placeholder="Search items..." id="menuSearch" oninput="loadMenuItems()">
+              <select class="filter-select" id="menuCategoryFilter" onchange="loadMenuItems()">
+                <option value="">All Categories</option>
+              </select>
+            </div>
+          </div>
+          <div style="overflow-x:auto" id="menuTableContainer">
+            <div class="empty-state"><div class="icon">📋</div><p>Loading menu...</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- EXPENSES -->
+      <div class="page" id="page-expenses">
+        <div style="display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap">
+          <button class="btn btn-red" onclick="showAddExpenseModal()">+ Add Expense</button>
+        </div>
+        <div class="panel">
+          <div class="panel-header">
+            <h3>Expenses</h3>
+            <div class="panel-actions">
+              <input type="date" class="search-input" style="min-width:auto" id="expenseFrom" onchange="loadExpenses()">
+              <span style="color:var(--text-muted);font-size:.8rem">to</span>
+              <input type="date" class="search-input" style="min-width:auto" id="expenseTo" onchange="loadExpenses()">
+              <select class="filter-select" id="expenseCategoryFilter" onchange="loadExpenses()">
+                <option value="">All Categories</option>
+                <option>Ingredients</option>
+                <option>Staff Salary</option>
+                <option>Utilities</option>
+                <option>Rent</option>
+                <option>Equipment</option>
+                <option>Marketing</option>
+                <option>Maintenance</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div style="overflow-x:auto" id="expensesTableContainer">
+            <div class="empty-state"><div class="icon">💰</div><p>Loading expenses...</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STAFF -->
+      <div class="page" id="page-staff">
+        <div style="display:flex;gap:1rem;margin-bottom:1.5rem">
+          <button class="btn btn-red" onclick="showAddStaffModal()">+ Add Staff</button>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><h3>Team Members</h3></div>
+          <div style="overflow-x:auto" id="staffTableContainer">
+            <div class="empty-state"><div class="icon">👥</div><p>Loading staff...</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="page" id="page-settings">
+        <div class="panel">
+          <div class="panel-header"><h3>Restaurant Settings</h3></div>
+          <div class="modal-body" id="settingsForm">
+            <p style="color:var(--text-muted)">Loading settings...</p>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:1.5rem">
+          <div class="panel-header"><h3>Change Password</h3></div>
+          <div class="modal-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Current Password</label>
+                <input type="password" id="currentPassword">
+              </div>
+              <div class="form-group">
+                <label>New Password</label>
+                <input type="password" id="newPassword">
+              </div>
+            </div>
+            <button class="btn btn-red" onclick="changePassword()">Update Password</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end content -->
+  </div><!-- end main -->
+</div><!-- end appShell -->
+
+<!-- MODAL -->
+<div class="modal-overlay" id="adminModal">
+  <div class="modal-box" id="adminModalContent"></div>
+</div>
+
+<!-- TOAST -->
+<div class="tk-toast" id="tkToast"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ── STATE ── */
+  var token = localStorage.getItem('tk_admin_token');
+  var currentUser = null;
+  var categories = [];
+
+  /* ── API ── */
+  async function api(path, opts) {
+    opts = opts || {};
+    var res = await fetch('/api' + path, {
+      method: opts.method || 'GET',
+      headers: Object.assign(
+        { 'Content-Type': 'application/json' },
+        token ? { 'Authorization': 'Bearer ' + token } : {},
+        opts.headers || {}
+      ),
+      body: opts.body ? JSON.stringify(opts.body) : undefined
+    });
+    var data = await res.json();
+    if (!res.ok) {
+      if (res.status === 401) { logout(); throw new Error('Session expired'); }
+      throw new Error(data.error || 'Request failed');
+    }
+    return data;
+  }
+
+  /* ── TOAST ── */
+  function toast(msg, type) {
+    var el = document.getElementById('tkToast');
+    el.textContent = msg;
+    el.className = 'tk-toast ' + (type || 'success') + ' show';
+    setTimeout(function () { el.classList.remove('show'); }, 3500);
+  }
+
+  /* ── TIME AGO ── */
+  function timeAgo(dateStr) {
+    if (!dateStr) return '—';
+    var diff = Date.now() - new Date(dateStr).getTime();
+    var mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return mins + 'm ago';
+    var hrs = Math.floor(mins / 60);
+    if (hrs < 24) return hrs + 'h ago';
+    return Math.floor(hrs / 24) + 'd ago';
+  }
+
+  /* ── AUTH ── */
+  function logout() {
+    token = null;
+    currentUser = null;
+    localStorage.removeItem('tk_admin_token');
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('appShell').style.display = 'none';
+  }
+
+  async function showApp() {
+    try {
+      if (!currentUser) {
+        var d = await api('/auth/me');
+        currentUser = d.user;
+      }
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('appShell').style.display = 'block';
+      document.getElementById('userName').textContent = currentUser.name;
+      document.getElementById('userRole').textContent = currentUser.role;
+      document.getElementById('userAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
+      loadDashboard();
+      loadCategories();
+    } catch (e) {
+      logout();
+    }
+  }
+
+  window.handleLogin = async function () {
+    var email = document.getElementById('loginEmail').value.trim();
+    var password = document.getElementById('loginPassword').value;
+    var errorEl = document.getElementById('loginError');
+    errorEl.style.display = 'none';
+    if (!email || !password) {
+      errorEl.textContent = 'Please enter email and password';
+      errorEl.style.display = 'block';
+      return;
+    }
+    try {
+      var res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, password: password })
+      });
+      var data = await res.json();
+      if (data.error) throw new Error(data.error);
+      token = data.token;
+      currentUser = data.user;
+      localStorage.setItem('tk_admin_token', token);
+      showApp();
+    } catch (err) {
+      errorEl.textContent = err.message;
+      errorEl.style.display = 'block';
+    }
+  };
+
+  window.handleLogout = function () { logout(); };
+
+  document.getElementById('loginPassword').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') window.handleLogin();
+  });
+
+  /* ── NAVIGATION ── */
+  window.navigate = function (page, el) {
+    document.querySelectorAll('.page').forEach(function (p) { p.classList.remove('active'); });
+    document.querySelectorAll('.nav-item').forEach(function (n) { n.classList.remove('active'); });
+    var pg = document.getElementById('page-' + page);
+    if (pg) pg.classList.add('active');
+    if (el) el.classList.add('active');
+    var titles = { dashboard: 'Dashboard', bookings: 'Bookings', orders: 'Orders', menu: 'Menu Manager', expenses: 'Expenses', staff: 'Staff Management', settings: 'Settings' };
+    document.getElementById('pageTitle').textContent = titles[page] || page;
+    document.getElementById('sidebar').classList.remove('open');
+    var loaders = { dashboard: loadDashboard, bookings: loadBookings, orders: loadOrders, menu: loadMenuItems, expenses: loadExpenses, staff: loadStaff, settings: loadSettings };
+    if (loaders[page]) loaders[page]();
+  };
+
+  /* ── MODAL ── */
+  function openModal(html) {
+    document.getElementById('adminModalContent').innerHTML = html;
+    document.getElementById('adminModal').classList.add('open');
+  }
+
+  window.closeModal = function () {
+    document.getElementById('adminModal').classList.remove('open');
+  };
+
+  document.getElementById('adminModal').addEventListener('click', function (e) {
+    if (e.target === this) window.closeModal();
+  });
+
+  /* ── RESTAURANT STATUS ── */
+  window.toggleRestaurantStatus = async function () {
+    try {
+      var data = await api('/settings/toggle-open', { method: 'PATCH' });
+      updateStatusBadge(data.is_open);
+      toast(data.message);
+    } catch (err) { toast(err.message, 'error'); }
+  };
+
+  function updateStatusBadge(isOpen) {
+    var el = document.getElementById('restaurantStatus');
+    if (isOpen) {
+      el.className = 'status-badge status-open';
+      el.innerHTML = '<span>●</span> Open Now';
+    } else {
+      el.className = 'status-badge status-closed';
+      el.innerHTML = '<span>●</span> Closed';
+    }
+  }
+
+  /* ── LOAD CATEGORIES ── */
+  async function loadCategories() {
+    try {
+      var data = await api('/menu/categories');
+      categories = data.categories;
+      var sel = document.getElementById('menuCategoryFilter');
+      if (sel) {
+        sel.innerHTML = '<option value="">All Categories</option>' +
+          categories.map(function (c) {
+            return '<option value="' + c.id + '">' + c.name + ' (' + c.tab_key + ')</option>';
+          }).join('');
+      }
+    } catch (e) { /* silent */ }
+  }
+
+  /* ══════════════ DASHBOARD ══════════════ */
+  async function loadDashboard() {
+    try {
+      var data = await api('/analytics/dashboard');
+
+      document.getElementById('statTodayBookings').textContent = data.today.bookings.total || 0;
+      document.getElementById('statBookingsDetail').textContent =
+        (data.today.bookings.pending || 0) + ' pending · ' + (data.today.bookings.confirmed || 0) + ' confirmed';
+
+      document.getElementById('statTodayOrders').textContent = data.today.orders.total || 0;
+      document.getElementById('statOrdersDetail').textContent = (data.today.orders.completed || 0) + ' completed';
+
+      document.getElementById('statTodayRevenue').textContent = '₹' + ((data.today.orders.paid_revenue || 0)).toLocaleString();
+      document.getElementById('statRevenueDetail').textContent = 'Paid orders today';
+
+      document.getElementById('statMonthRevenue').textContent = '₹' + ((data.month.orders.paid_revenue || 0)).toLocaleString();
+      document.getElementById('statMonthDetail').textContent =
+        (data.month.orders.total || 0) + ' orders · ₹' + ((data.month.expenses.total || 0)).toLocaleString() + ' expenses';
+
+      if (data.today.bookings.pending > 0) {
+        var badge = document.getElementById('pendingBookingsBadge');
+        badge.style.display = 'inline';
+        badge.textContent = data.today.bookings.pending;
+      }
+
+      var settings = await api('/settings');
+      updateStatusBadge(settings.settings.is_open === '1');
+
+      var bkData = await api('/bookings?limit=5');
+      if (bkData.bookings.length) {
+        var rows = bkData.bookings.map(function (b) {
+          return '<tr>' +
+            '<td style="font-family:monospace;color:var(--gold);font-size:.78rem">' + b.ref_code + '</td>' +
+            '<td>' + b.customer_name + '</td>' +
+            '<td style="font-size:.8rem;color:var(--text-dim)">' + b.booking_date + ' ' + b.time_slot + '</td>' +
+            '<td><span class="badge-status badge-' + b.status + '">' + b.status + '</span></td>' +
+            '</tr>';
+        }).join('');
+        document.getElementById('recentBookingsTable').innerHTML =
+          '<table><thead><tr><th>Ref</th><th>Name</th><th>Date</th><th>Status</th></tr></thead><tbody>' + rows + '</tbody></table>';
+      }
+
+      if (data.recent_activity && data.recent_activity.length) {
+        document.getElementById('recentActivityList').innerHTML = data.recent_activity.slice(0, 15).map(function (a) {
+          return '<div style="display:flex;gap:.6rem;align-items:flex-start;padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.8rem">' +
+            '<div style="width:6px;height:6px;border-radius:50%;background:var(--gold);margin-top:6px;flex-shrink:0"></div>' +
+            '<div><span style="color:var(--text)">' + (a.user_name || 'System') + '</span>' +
+            '<span style="color:var(--text-muted)"> ' + a.action.replace(/_/g, ' ') + '</span>' +
+            (a.details ? '<span style="color:var(--text-dim)"> · ' + a.details + '</span>' : '') +
+            '<div style="font-size:.7rem;color:var(--text-muted);margin-top:.1rem">' + timeAgo(a.created_at) + '</div></div></div>';
+        }).join('');
+      }
+    } catch (err) { console.error('Dashboard error:', err); }
+  }
+
+  /* ══════════════ BOOKINGS ══════════════ */
+  async function loadBookings() {
+    try {
+      var search = (document.getElementById('bookingSearch') || {}).value || '';
+      var status = (document.getElementById('bookingFilter') || {}).value || 'all';
+      var date = (document.getElementById('bookingDateFilter') || {}).value || '';
+      var data = await api('/bookings?search=' + encodeURIComponent(search) + '&status=' + status + '&date=' + date + '&limit=100');
+
+      if (!data.bookings.length) {
+        document.getElementById('bookingsTableContainer').innerHTML =
+          '<div class="empty-state"><div class="icon">📅</div><p>No bookings found</p></div>';
+        return;
+      }
+
+      var statusOpts = ['pending', 'confirmed', 'seated', 'completed', 'cancelled', 'no_show'];
+      var rows = data.bookings.map(function (b) {
+        var opts = statusOpts.map(function (s) {
+          return '<option value="' + s + '"' + (b.status === s ? ' selected' : '') + '>' + s + '</option>';
+        }).join('');
+        return '<tr>' +
+          '<td style="font-family:monospace;color:var(--gold);font-size:.78rem">' + b.ref_code + '</td>' +
+          '<td><strong>' + b.customer_name + '</strong>' + (b.dining_pref ? '<br><span style="font-size:.7rem;color:var(--text-muted)">' + b.dining_pref + '</span>' : '') + '</td>' +
+          '<td><a href="tel:' + b.phone + '" style="color:var(--blue);text-decoration:none">' + b.phone + '</a></td>' +
+          '<td style="font-size:.8rem">' + b.booking_date + '<br><span style="color:var(--text-muted)">' + b.time_slot + '</span></td>' +
+          '<td>' + b.guests + '</td>' +
+          '<td><select class="filter-select" style="padding:.3rem .5rem;font-size:.72rem" onchange="updateBooking(' + b.id + ',{status:this.value})">' + opts + '</select></td>' +
+          '<td><span class="badge-status badge-' + b.payment_status + '" style="cursor:pointer" onclick="toggleBookingPayment(' + b.id + ',\'' + b.payment_status + '\')">' + b.payment_status + '</span></td>' +
+          '<td>' +
+          '<button class="action-btn" onclick="viewBookingDetail(' + b.id + ')" title="View">👁️</button>' +
+          '<button class="action-btn danger" onclick="deleteBooking(' + b.id + ')" title="Delete">🗑️</button>' +
+          '</td></tr>';
+      }).join('');
+
+      document.getElementById('bookingsTableContainer').innerHTML =
+        '<table><thead><tr><th>Ref</th><th>Customer</th><th>Phone</th><th>Date &amp; Time</th><th>Guests</th><th>Status</th><th>Payment</th><th>Actions</th></tr></thead><tbody>' + rows + '</tbody></table>';
+    } catch (err) { toast(err.message, 'error'); }
+  }
+
+  window.toggleBookingPayment = function (id, current) {
+    updateBooking(id, { payment_status: current === 'paid' ? 'unpaid' : 'paid' });
+  };
+
+  window.updateBooking = async function (id, updates) {
+    try {
+      await api('/bookings/' + id, { method: 'PUT', body: updates });
+      toast('Booking updated');
+      loadBookings();
+    } catch (err) { toast(err.message, 'error'); }
+  };
+
+  window.deleteBooking = async function (id) {
+    if (!confirm('Delete this booking?')) return;
+    try {
+      await api('/bookings/' + id, { method: 'DELETE' });
+      toast('Booking deleted');
+      loadBookings();
+    } catch (err) { toast(err.message, 'error'); }
+  };
+
+  window.viewBookingDetail = async function (id) {
+    try {
+      var data = await api('/bookings/' + id);
+      var b = data.booking;
+      openModal(
+        '<div class="modal-head"><h3>Booking ' + b.ref_code + '</h3><button class="modal-close" onclick="closeModal()">✕</button></div>' +
+        '<div class="modal-body">' +
+        '<div class="form-row">' +
+        '<div class="form-group"><label>Customer</label><input value="' + b.customer_name + '" readonly></div>' +
+        '<div class="form-group"><label>Phone</label><input value="' + b.phone + '" readonly></div>' +
+        '</div>' +
+        '<div class="form-row">' +
+        '<div class="form-group"><label>Date</label><input value="' + b.booking_date + '" readonly></div>' +
+        '<div class="form-group"><label>Time Slot</label><input value="' + b.time_slot + '" readonly></div>' +
+        '</div>' +
+        '<div class="form-row">' +
+        '<div class="form-group"><label>Guests</label><input value="' + b.guests + '" readonly></div>' +
+        '<div class="form-group"><label>Preference</label><input value="' + (b.dining_pref || 'None') + '" readonly></div>' +
+        '</div>' +
+        (b.special_requests ? '<div class="form-group"><label>Special Requests</label><textarea readonly>' + b.special_requests + '</textarea></div>' : '') +
+        '<div class="form-group"><label>Staff Notes</label><textarea id="bkNotes" placeholder="Add internal notes...">' + (b.staff_notes || '') + '</textarea></div>' +
+        '</div>' +
+        '<div class="modal-foot">' +
+        '<button class="btn btn-ghost" onclick="closeModal()">Close</button>' +
+        '<button class="btn btn-red" onclick="saveBookingNotes(' + b.id + ')">Save Notes</button>' +
+        '</div>'
+      );
+    } catch (err) { toast(err.message, 'error'); }
+  };
+
+  window.saveBookingNotes = function (id) {
+    var notes = document.getElementById('bkNotes').value;
+    window.updateBooking(id, { staff_notes: notes });
+    window.closeModal();
+  };
+
+  /* ══════════════ ORDERS ══════════════ */
+  async function loadOrders() {
+    try {
+      var search = (document.getElementById('orderSearch') || {}).value || '';
+      var status = (document.getElementById('orderStatusFilter') || {}).value || 'all';
+      var type = (document.getElementById('orderTypeFilter') || {}).value || 'all';
+      var data = await api('/orders?search=' + encodeURIComponent(search) + '&status=' + status + '&type=' + type + '&limit=100');
+
+      if (!data.orders.length) {
+        document.getElementById('ordersTableContainer').innerHTML =
+          '<div class="empty-state"><div class="icon">🧾</div><p>No orders found</p></div>';
+        return;
+      }
+
+      var statusOpts = ['received', 'preparing', 'ready', 'out_for_delivery', 'delivered', 'completed', 'cancelled'];
+      var rows = data.orders.map(function (o) {
+        var opts = statusOpts.map(function (s) {
+          return '<option value="' + s + '"' + (o.status === s ? ' selected' : '') + '>' + s.replace(/_/g, ' ') + '</option>';
+        }).join('');
+        return '<tr>' +
+          '<td style="font-family:monospace;color:var(--gold);font-size:.78rem">' + o.order_number + '</td>' +
+          '<td><strong>' + o.customer_name + '</strong><br><span style="font-size:.7rem;color:var(--text-muted)">' + o.phone + '</span></td>' +
+          '<td><span class="badge-status badge-' + o.order_type + '">' + o.order_type.replace(/_/g, ' ') + '</span></td>' +
+          '<td style="font-weight:600;color:var(--gold)">₹' + o.total + '</td>' +
+          '<td><select class="filter-select" style="padding:.3rem .5rem;font-size:.72rem" onchange="updateOrder(' + o.id + ',{status:this.value})">' + opts + '</select></td>' +
+          '<td><span class="badge-status badge-' + o.payment_status + '" style="cursor:pointer" onclick="toggleOrderPayment(' + o.id + ',\'' + o.payment_status + '\')">' + o.payment_status + '</span></td>' +
+          '<td style="font-size:.75rem;color:var(--text-muted)">' + timeAgo(o.created_at) + '</td>' +
+          '<td>' +
+          '<button class="action-btn" onclick="viewOrder(' + o.id + ')" title="View">👁️</button>' +
+          '<button class="action-btn danger" onclick="deleteOrder(' + o.id + ')" title="Delete">🗑️</button>' +
+          '</td></tr>';
+      }).join('');
+
+      document.getElementById('ordersTableContainer').innerHTML =
+        '<table><thead><tr><th>Order #</th><th>Customer</th><th>Type</th><th>Total</th><th>Status</th><th>Payment</th><th>Time</th><th>Actions</th></tr></thead><tbody>' + rows + '</tbody></table>';
+    } catch (err) { toast(err.message, 'error'); }
+  }
+
+  window.toggleOrderPayment = function (id, current) {
+    updateOrder(id, { payment_status: current === 'paid' ? 'unpaid' : 'paid' });
+  };
+
+  window.updateOrder = async function (id, updates) {
+    try {
+      await api('/orders/' + id, { method: 'PUT', body: updates });
+      toast('Order updated');
+      loadOrders();
+    } catch (err) { toast(err.message, 'error'); }
+  };
+
+  window.deleteOrder = async function (id) {
+    if (!confirm('Delete this order?')) return;
+    try {
+      await api('/orders/' + id, { method: 'DELETE' });
+      toast('Order deleted');
+      loadOrders();
+    } catch (err) { toast(err.message, 'error'); }
+  };
+
+  window.viewOrder = async function (id) {
+    try {
+      var data = await api('/orders/' + id);
+      var o = data.order;
+      var items = [];
+      try { items = JSON.parse(o.items_json || '[]'); } catch (e) { items = []; }
+      var itemRows = items.map(function (i) {
+        return '<div style="display:flex;justify-content:space-between;padding:.3rem 0;font-size:.85rem;border-bottom:1px solid var(--border)">' +
+          '<span>' + (i.name || i.item_name || '—') + (i.quantity > 1 ? ' ×' + i.quantity : '') + '</span>' +
+          '<span style="color:var(--gold)">₹' + (i.price || '—') + '</span></div>';
+      }).join('');
+      openModal(
+        '<div class="modal-head"><h3>Order ' + o.order_number + '</h3><button class="modal-close" onclick="closeModal()">✕</button></div>' +
+        '<div class="modal-body">' +
+        '<div class="form-row">' +
+        '<div class="form-group"><label>Customer</label><input value="' + o.customer_name + '" readonly></div>' +
+        '<div class="form-group"><label>Phone</label><input value="' + o.phone + '" readonly></div>' +
+        '</div>' +
+        '<div class="form-row">' +
+        '<div class="form-group"><label>Type</label><input value="' + o.order_type + '" readonly></div>' +
+        '<div class="form-group"><label>Payment</label><input value="' + o.payment_method + ' — ' + o.payment_status + '" readonly></div>' +
+        '</div>' +
+        (o.address ? '<div class="form-group"><label>Delivery Address</label><textarea readonly>' + o.address + '</textarea></div>' : '') +
+        '<div style="background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin:1rem 0">' +
+        '<label style="font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:.5rem;display:block">Order Items</label>' +
+        itemRows +
+        '<div style="display:flex;justify-content:space-between;padding:.6rem 0 0;font-weight:700;font-size:1rem;color:var(--gold)">' +
+        '<span>Total</span><span>₹' + o.total + '</span></div>' +
+        '</div>' +
+        '</div>' +
+        '<div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Close</button></div>'
+      );
+    } catch (err) { toast(err.message, 'error'); }
+  };
+
+  window.showNewOrderModal = function () {
+    openModal(
+      '<div class="modal-head"><h3>New Order</h3><button class="modal-close" onclick="closeModal()">✕</button></div>' +
+      '<div class="modal-body">' +
+      '<div class="form-row">' +
+      '<div class="form-group"><label>Customer Name *</label><input id="noName" placeholder="Customer name"></div>' +
+      '<div class="form-group"><label>Phone *</label><input id="noPhone" placeholder="+91 XXXXX XXXXX"></div>' +
+      '</div>' +
+      '<div class="form-row">' +
+      '<div class="form-group"><label>Order Type</label><select id="noType"><option value="dine_in">Dine In</option><option value="delivery">Delivery</option><option value="takeaway">Takeaway</option></select></div>' +
+      '<div class="form-group"><label>Payment Method</label><select id="noPayment"><option value="cash">Cash</option><option value="upi">UPI</option><option value="card">Card</option><option value="online">Online</option></select></div>' +
+      '</div>' +
+      '<div class="form-group"><label>Delivery Address</label><textarea id="noAddress" placeholder="For delivery orders"></textarea></div>' +
+      '<div class="form-group"><label>Items (JSON)</label><textarea id="noItems" rows="3" placeholder=\'[{"name":"Chicken Biryani","quantity":1,"price":160}]\'></textarea></div>' +
+      '<div class="form-group"><label>Total Amount (₹) *</label><input type="number" id="noTotal" placeholder="0"></div>' +
+      '</div>' +
+      '<div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-red" onclick="createOrder()">Create Order</button></div>'
+    );
+  };
+
+  window.createOrder = async function () {
+    var name = document.getElementById('noName').value.trim();
+    var phone = document.getElementById('noPhone').value.trim();
+    var total = parseFloat(document.getElementById('noTotal').value);
+    var items = [];
+    try { items = JSON.parse(document.getElementById('noItems').value); } catch (e) { items = []; }
+    if (!name || !phone || !total) { toast('Fill required fields', 'error'); return; }
+    try {
+      await api('/orders', { method: 'POST', body: {
+        customer_name: name,
+        phone: phone,
+        address: document.getElementById('noAddress').value,
+        order_type: document.getElementById('noType').value,
+        payment_method: document.getElementById('noPayment').value,
+        items: items,
+        total: total,
+        subtotal: total
+      }});
+      window.closeModal();
+      toast('Order created');
+      loadOrders();
+    } catch (err) { toast(err.message, 'error'); }
+  };
+
+  /* ══════════════ MENU ══════════════ */
+  async function loadMenuItems() {
+    try {
+      var search = (document.getElementById('menuSearch') || {}).value || '';
+      var catId = (document.getElementById('menuCategoryFilter') || {}).value || '';
+      var data = await api('/menu/items?search=' + encodeURIComponent(search) + '&category_id=' + catId);
+
+      if (!data.items.length) {
+        document.getElementById('menuTableContainer').innerHTML =
+          '<div class="empty-state"><div class="icon">📋</div><p>No menu items found</p></div>';
+        return;
+      }
+
+      var rows = data.items.map(function (i) {
+        return '<tr>' +
+          '<td><strong>' + i.name + '</strong>' + (i.is_veg ? ' <span style="color:var(--green);font-size:.7rem">● VEG</span>' : '') + '</td>' +
+          '<td style="font-size:.8rem;color:var(--text-dim)">' + i.category_name + '<br><span style="color:var(--text-muted)">' + i.tab_key + '</span></td>' +
+          '<td style="color:var(--gold);font-weight:600">' + (i.price ? '₹' + i.price : (i.price_label || '—')) + '</td>' +
+          '<td><button class="btn btn-sm ' + (i.is_available ? 'btn-ghost' : 'btn-red') + '" onclick="toggleItem(' + i.id + ')" style="font-size:.7rem">' +
+          (i.is_available ? '✓ Available' : '✕ Unavailable') + '</button></td>' +
+          '<td>' +
+          '<button class="action-btn" onclick="showEditItemModal(' + i.id + ')" title="Edit">✏️</button>' +
+          '<button class="action-btn danger" onclick="deleteMenuItem(' + i.id + ')" title="Delete">🗑️</button>' +
+          '</td></tr>';
+      }).join('');
+
+      document.getElementById('menuTableContainer').innerHTML =
+        '<table><thead><tr><th>Name</th><th>Category</th><th>Price</th><th>Available</th><th>Actions</th></tr></thead><tbody>' + rows + '</tbody></table>';
+    } catch (err) { toast(err.message, 'error'); }
+  }
+
+  window.toggleItem = async function (id) {
+    try {
+      await api('/menu/items/' + id + '/toggle', { method: 'PATCH' });
+      loadMenuItems();
+    } catch (err) { toast(err.message, 'error'); }
+  };
+
+  window.deleteMenuItem = async function (id) {
+    if (!confirm('Delete this menu item?')) return;
+    try {
+      await api('/menu/items/' + id, { method: 'DELETE' });
+      toast('Item deleted');
+      loadMenuItems();
+    } catch (err) { toast(err.message, 'error'); }
+  };
+
+  function buildCatOptions(selectedId) {
+    return categories.map(function (c) {
+      return '<option value="' + c.id + '"' + (c.id === selectedId ? ' selected' : '') + '>' + c.name + ' (' + c.tab_key + ')</option>';
+    }).join('');
+  }
+
+  window.showAddItemModal = function () {
+    openModal(
+      '<div class="modal-head"><h3>Add Menu Item</h3><button class="modal-close" onclick="closeModal()">✕</button></div>' +
+      '<div class="modal-body">' +
+      '<div class="form-group"><label>Category *</label><select id="iCat">' + buildCatOptions(null) + '</select></div>' +
+      '<div class="form-group"><label>Item Name *</label><input id="iName" placeholder="e.g. Chicken Biryani"></div>' +
+      '<div class="form-row">' +
+      '<div class="form-group"><label>Price (₹)</label><input type="number" id="iPrice" placeholder="0"></div>' +
+      '<div class="form-group"><label>Price Label (alt)</label><input id="iPriceLabel" placeholder="e.g. ₹160 / ₹170"></div>' +
+      '</div>' +
+      '<div class="form-row">' +
+      '<div class="form-group"><label>Vegetarian</label><select id="iVeg"><option value="0">No</option><option value="1">Yes</option></select></div>' +
+      '<div class="form-group"><label>Spice Level (0-5)</label><input type="number" id="iSpice" min="0" max="5" value="1"></div>' +
+      '</div>' +
+      '<div class="form-group"><label>Description</label><textarea id="iDesc" placeholder="Optional description..."></textarea></div>' +
+      '</div>' +
+      '<div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-red" onclick="createMenuItem()">Add Item</button></div>'
+    );
+  };
+
+  window.createMenuItem = async function () {
+    var name = document.getElementById('iName').value.trim();
+    var catId = document.getElementById('iCat').value;
+    if (!name || !catId) { toast('Name and category required', 'error'); return; }
+    try {
+      await api('/menu/items', { method: 'POST', body: {
+        category_id: parseInt(catId),
+        name: name,
+        price: parseFloat(document.getElementById('iPrice').value) || null,
+        price_label: document.getElementById('iPriceLabel').value || null,
+        is_veg: parseInt(document.getElementById('iVeg').value),
+        spice_level: parseInt(document.getElementById('iSpice').value) || 1,
+        description: document.getElementById('iDesc').value || null
+      }});
+      window.closeModal();
+      toast('Item added');
+      loadMenuItems();
+      loadCategories();
+    } catch (err) { toast(err.message, 'error'); }
+  };
+
+  window.showAddCategoryModal = function () {
+    openModal(
+      '<div class="modal-head"><h3>Add Category</h3><button class="modal-close" onclick="closeModal()">✕</button></div>' +
+      '<div class="modal-body">' +
+      '<div class="form-group"><label>Category Name *</label><input id="cName" placeholder="e.g. Chicken Soups"></div>' +
+      '<div class="form-group"><label>Tab Key *</label>' +
+      '<select id="cTab">' +
+      '<option value="soups">soups</option>' +
+      '<option value="starters">starters</option>' +
+      '<option value="mainveg">mainveg</option>' +
+      '<option value="mainnonveg">mainnonveg</option>' +
+      '<option value="tandoori">tandoori</option>' +
+      '<option value="ricebreads">ricebreads</option>' +
+      '<option value="drinks">drinks</option>' +
+      '</select></div>' +
+      '<div class="form-group"><label>Display Order</label><input type="number" id="cOrder" value="0"></div>' +
+      '</div>' +
+      '<div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-red" onclick="createCategory()">Add Category</button></div>'
+    );
+  };
+
+  window.createCategory = async function () {
+    var name = document.getElementById('cName').value.trim();
+    var tab_key = document.getElementById('cTab').value;
+    if (!name) { toast('Name required', 'error'); return; }
+    try {
+      await api('/menu/categories', { method: 'POST', body: {
+        name: name,
+        tab_key: tab_key,
+        display_order: parseInt(document.getElementById('cOrder').value) || 0
+      }});
+      window.closeModal();
+      toast('Category added');
+      loadCategories();
+    } catch (err) { toast(err.message, 'error'); }
+  };
+
+  window.showEditItemModal = async function (id) {
+    try {
+      var all = await api('/menu/items');
+      var item = null;
+      for (var i = 0; i < all.items.length; i++) {
+        if (all.items[i].id === id) { item = all.items[i]; break; }
+      }
+      if (!item) { toast('Item not found', 'error'); return; }
+      openModal(
+        '<div class="modal-head"><h3>Edit: ' + item.name + '</h3><button class="modal-close" onclick="closeModal()">✕</button></div>' +
+        '<div class="modal-body">' +
+        '<div class="form-group"><label>Category</label><select id="eiCat">' + buildCatOptions(item.category_id) + '</select></div>' +
+        '<div class="form-group"><label>Name</label><input id="eiName" value="' + item.name + '"></div>' +
+        '<div class="form-row">' +
+        '<div class="form-group"><label>Price</label><input type="number" id="eiPrice" value="' + (item.price || '') + '"></div>' +
+        '<div class="form-group"><label>Price Label</label><input id="eiPriceLabel" value="' + (item.price_label || '') + '"></div>' +
+        '</div>' +
+        '<div class="form-row">' +
+        '<div class="form-group"><label>Vegetarian</label><select id="eiVeg"><option value="0"' + (!item.is_veg ? ' selected' : '') + '>No</option><option value="1"' + (item.is_veg ? ' selected' : '') + '>Yes</option></select></div>' +
+        '<div class="form-group"><label>Spice Level</label><input type="number" id="eiSpice" min="0" max="5" value="' + (item.spice_level || 1) + '"></div>' +
+        '</div>' +
+        '</div>' +
+        '<div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-red" onclick="saveEditItem(' + id + ')">Save Changes</button></div>'
+      );
+    } catch (err) { toast(err.message, 'error'); }
+  };
+
+  window.saveEditItem = async function (id) {
+    try {
+      await api('/menu/items/' + id, { method: 'PUT', body: {
+        category_id: parseInt(document.getElementById('eiCat').value),
+        name: document.getElementById('eiName').value,
+        price: parseFloat(document.getElementById('eiPrice').value) || null,
+        price_label: document.getElementById('eiPriceLabel').value || null,
+        is_veg: parseInt(document.getElementById('eiVeg').value),
+        spice_level: parseInt(document.getElementById('eiSpice').value) || 1
+      }});
+      window.closeModal();
+      toast('Item updated');
+      loadMenuItems();
+    } catch (err) { toast(err.message, 'error'); }
+  };
+
+  /* ══════════════ EXPENSES ══════════════ */
+  async function loadExpenses() {
+    try {
+      var from = (document.getElementById('expenseFrom') || {}).value || '';
+      var to = (document.getElementById('expenseTo') || {}).value || '';
+      var cat = (document.getElementById('expenseCategoryFilter') || {}).value || '';
+      var data = await api('/analytics/expenses?from=' + from + '&to=' + to + '&category=' + encodeURIComponent(cat) + '&limit=100');
+
+      if (!data.expenses.length) {
+        document.getElementById('expensesTableContainer').innerHTML =
+          '<div class="empty-state"><div class="icon">💰</div><p>No expenses found</p></div>';
+        return;
+      }
+
+      var rows = data.expenses.map(function (e) {
+        return '<tr>' +
+          '<td style="font-size:.8rem">' + e.date + '</td>' +
+          '<td><span class="badge-status badge-confirmed">' + e.category + '</span></td>' +
+          '<td style="color:var(--text-dim)">' + (e.description || '—') + '</td>' +
+          '<td style="color:var(--crimson);font-weight:600">₹' + e.amount + '</td>' +
+          '<td style="font-size:.8rem;color:var(--text-muted)">' + (e.added_by_name || '—') + '</td>' +
+          '<td><button class="action-btn danger" onclick="deleteExpense(' + e.id + ')">🗑️</button></td>' +
+          '</tr>';
+      }).join('');
+
+      document.getElementById('expensesTableContainer').innerHTML =
+        '<table><thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th>Added By</th><th>Actions</th></tr></thead><tbody>' + rows + '</tbody></table>';
+    } catch (err) { toast(err.message, 'error'); }
+  }
+
+  window.showAddExpenseModal = function () {
+    var today = new Date().toISOString().split('T')[0];
+    openModal(
+      '<div class="modal-head"><h3>Add Expense</h3><button class="modal-close" onclick="closeModal()">✕</button></div>' +
+      '<div class="modal-body">' +
+      '<div class="form-row">' +
+      '<div class="form-group"><label>Date *</label><input type="date" id="exDate" value="' + today + '"></div>' +
+      '<div class="form-group"><label>Amount (₹) *</label><input type="number" id="exAmount" placeholder="0"></div>' +
+      '</div>' +
+      '<div class="form-group"><label>Category *</label>' +
+      '<select id="exCat"><option>Ingredients</option><option>Staff Salary</option><option>Utilities</option><option>Rent</option><option>Equipment</option><option>Marketing</option><option>Maintenance</option><option>Other</option></select>' +
+      '</div>' +
+      '<div class="form-group"><label>Description</label><textarea id="exDesc" placeholder="What was this expense for?"></textarea></div>' +
+      '<div class="form-group"><label>Payment Method</label><select id="exPay"><option value="cash">Cash</option><option value="upi">UPI</option><option value="card">Card</option></select></div>' +
+      '</div>' +
+      '<div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-red" onclick="createExpense()">Add Expense</button></div>'
+    );
+  };
+
+  window.createExpense = async function () {
+    var date = document.getElementById('exDate').value;
+    var amount = parseFloat(document.getElementById('exAmount').value);
+    var category = document.getElementById('exCat').value;
+    if (!date || !amount || !category) { toast('Fill required fields', 'error'); return; }
+    try {
+      await api('/analytics/expenses', { method: 'POST', body: {
+        date: date,
+        amount: amount,
+        category: category,
+        description: document.getElementById('exDesc').value,
+        payment_method: document.getElementById('exPay').value
+      }});
+      window.closeModal();
+      toast('Expense added');
+      loadExpenses();
+    } catch (err) { toast(err.message, 'error'); }
+  };
+
+  window.deleteExpense = async function (id) {
+    if (!confirm('Delete this expense?')) return;
+    try {
+      await api('/analytics/expenses/' + id, { method: 'DELETE' });
+      toast('Expense deleted');
+      loadExpenses();
+    } catch (err) { toast(err.message, 'error'); }
+  };
+
+  /* ══════════════ STAFF ══════════════ */
+  async function loadStaff() {
+    try {
+      var data = await api('/auth/staff');
+      if (!data.staff.length) {
+        document.getElementById('staffTableContainer').innerHTML =
+          '<div class="empty-state"><div class="icon">👥</div><p>No staff found</p></div>';
+        return;
+      }
+      var rows = data.staff.map(function (s) {
+        return '<tr>' +
+          '<td><strong>' + s.name + '</strong></td>' +
+          '<td style="color:var(--text-dim)">' + s.email + '</td>' +
+          '<td><span class="badge-status badge-confirmed">' + s.role + '</span></td>' +
+          '<td><span class="badge-status ' + (s.is_active ? 'badge-completed' : 'badge-cancelled') + '">' + (s.is_active ? 'Active' : 'Disabled') + '</span></td>' +
+          '<td style="font-size:.75rem;color:var(--text-muted)">' + (s.last_login ? timeAgo(s.last_login) : 'Never') + '</td>' +
+          '<td><button class="action-btn danger" onclick="deleteStaff(' + s.id + ')">🗑️</button></td>' +
+          '</tr>';
+      }).join('');
+      document.getElementById('staffTableContainer').innerHTML =
+        '<table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Last Login</th><th>Actions</th></tr></thead><tbody>' + rows + '</tbody></table>';
+    } catch (err) { toast(err.message, 'error'); }
+  }
+
+  window.showAddStaffModal = function () {
+    openModal(
+      '<div class="modal-head"><h3>Add Staff Member</h3><button class="modal-close" onclick="closeModal()">✕</button></div>' +
+      '<div class="modal-body">' +
+      '<div class="form-row">' +
+      '<div class="form-group"><label>Full Name *</label><input id="stName" placeholder="Staff name"></div>' +
+      '<div class="form-group"><label>Email *</label><input type="email" id="stEmail" placeholder="email@example.com"></div>' +
+      '</div>' +
+      '<div class="form-row">' +
+      '<div class="form-group"><label>Password *</label><input type="password" id="stPass" placeholder="Min 8 characters"></div>' +
+      '<div class="form-group"><label>Role</label><select id="stRole"><option value="staff">Staff</option><option value="admin">Admin</option></select></div>' +
+      '</div>' +
+      '</div>' +
+      '<div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-red" onclick="createStaff()">Add Staff</button></div>'
+    );
+  };
+
+  window.createStaff = async function () {
+    var name = document.getElementById('stName').value.trim();
+    var email = document.getElementById('stEmail').value.trim();
+    var password = document.getElementById('stPass').value;
+    if (!name || !email || !password) { toast('All fields required', 'error'); return; }
+    try {
+      await api('/auth/staff', { method: 'POST', body: {
+        name: name,
+        email: email,
+        password: password,
+        role: document.getElementById('stRole').value
+      }});
+      window.closeModal();
+      toast('Staff member added');
+      loadStaff();
+    } catch (err) { toast(err.message, 'error'); }
+  };
+
+  window.deleteStaff = async function (id) {
+    if (!confirm('Delete this staff member?')) return;
+    try {
+      await api('/auth/staff/' + id, { method: 'DELETE' });
+      toast('Staff deleted');
+      loadStaff();
+    } catch (err) { toast(err.message, 'error'); }
+  };
+
+  /* ══════════════ SETTINGS ══════════════ */
+  async function loadSettings() {
+    try {
+      var data = await api('/settings');
+      var s = data.settings;
+      document.getElementById('settingsForm').innerHTML =
+        '<div class="form-row">' +
+        '<div class="form-group"><label>Restaurant Name</label><input id="s_name" value="' + (s.restaurant_name || '') + '"></div>' +
+        '<div class="form-group"><label>Tagline</label><input id="s_tagline" value="' + (s.tagline || '') + '"></div>' +
+        '</div>' +
+        '<div class="form-row">' +
+        '<div class="form-group"><label>Phone</label><input id="s_phone" value="' + (s.phone || '') + '"></div>' +
+        '<div class="form-group"><label>Email</label><input id="s_email" value="' + (s.email || '') + '"></div>' +
+        '</div>' +
+        '<div class="form-group"><label>Address</label><textarea id="s_address">' + (s.address || '') + '</textarea></div>' +
+        '<div class="form-row">' +
+        '<div class="form-group"><label>Opening Time</label><input type="time" id="s_open" value="' + (s.opening_time || '12:30') + '"></div>' +
+        '<div class="form-group"><label>Closing Time</label><input type="time" id="s_close" value="' + (s.closing_time || '23:00') + '"></div>' +
+        '</div>' +
+        '<div class="form-row">' +
+        '<div class="form-group"><label>Reservation Fee (₹)</label><input type="number" id="s_fee" value="' + (s.reservation_fee || '30') + '"></div>' +
+        '<div class="form-group"><label>Tax %</label><input type="number" id="s_tax" value="' + (s.tax_percentage || '5') + '"></div>' +
+        '</div>' +
+        '<button class="btn btn-red" onclick="saveSettings()" style="margin-top:.5rem">Save Settings</button>';
+    } catch (err) { toast(err.message, 'error'); }
+  }
+
+  window.saveSettings = async function () {
+    try {
+      await api('/settings', { method: 'PUT', body: {
+        restaurant_name: document.getElementById('s_name').value,
+        tagline: document.getElementById('s_tagline').value,
+        phone: document.getElementById('s_phone').value,
+        email: document.getElementById('s_email').value,
+        address: document.getElementById('s_address').value,
+        opening_time: document.getElementById('s_open').value,
+        closing_time: document.getElementById('s_close').value,
+        reservation_fee: document.getElementById('s_fee').value,
+        tax_percentage: document.getElementById('s_tax').value
+      }});
+      toast('Settings saved');
+    } catch (err) { toast(err.message, 'error'); }
+  };
+
+  window.changePassword = async function () {
+    var current = document.getElementById('currentPassword').value;
+    var next = document.getElementById('newPassword').value;
+    if (!current || !next) { toast('Both passwords required', 'error'); return; }
+    try {
+      await api('/auth/change-password', { method: 'PUT', body: { currentPassword: current, newPassword: next }});
+      toast('Password updated');
+      document.getElementById('currentPassword').value = '';
+      document.getElementById('newPassword').value = '';
+    } catch (err) { toast(err.message, 'error'); }
+  };
+
+  /* ── AUTO LOGIN ── */
+  if (token) { showApp(); }
+
+})();
+</script>
+</body>
+</html>
