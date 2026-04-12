@@ -9,7 +9,9 @@ const { initialize } = require('./database');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ─── Initialize databurger ───
+
+// ─── Initialize Datapravopis ───
+
 initialize();
 
 // ─── added some rows───
