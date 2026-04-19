@@ -1,57 +1,59 @@
-// tests/admin.spec.js
-import { test, expect } from '@playwright/test';
+const express = require('express');
+const router = express.Router();
+const { getDb } = require('../database');
+const { authenticate } = require('../middleware/auth');
 
-test.describe('Наскрізні E2E тести (Критичний шлях)', () => {
-  
-  test.use({ baseURL: 'http://localhost:3000' });
+// Отримання списку замовлень (тільки для авторизованих)
+router.get('/', authenticate, async (req, res) => {
+    try {
+        const db = getDb();
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const offset = (page - 1) * limit;
 
-  // --- СЦЕНАРІЙ 1: АВТОРИЗАЦІЯ (Адмінка) ---
-  test('Сценарій 1: Успішна авторизація власника', async ({ page }) => {
-    await page.goto('/admin');
-    await page.locator('input[type="email"]').fill('admin@tandoor.com');
-    await page.locator('#loginPassword').fill('password123');
+        const totalRow = db.prepare('SELECT COUNT(*) as count FROM orders').get();
+        const total = totalRow ? totalRow.count : 0;
+        
+        const orders = db.prepare('SELECT * FROM orders ORDER BY created_at DESC LIMIT ? OFFSET ?').all(limit, offset);
 
-    await Promise.all([
-      page.waitForResponse(res => res.url().includes('/api/auth') && res.status() === 200),
-      page.locator('button', { hasText: 'Sign In' }).click(),
-    ]);
+        const formattedOrders = orders.map(order => {
+            let items = [];
+            try {
+                items = JSON.parse(order.items_json || '[]');
+            } catch (e) {
+                items = [];
+            }
+            return { ...order, items };
+        });
 
-    await expect(page.locator('#loginPassword')).toBeHidden({ timeout: 10000 });
-  });
-
-  // --- СЦЕНАРІЙ 2: БРОНЮВАННЯ (Твій критичний шлях) ---
-  test('Сценарій 2: Успішне бронювання столика клієнтом', async ({ page }) => {
-    // 1. Відкриваємо головну сторінку
-    await page.goto('/');
-
-    // 2. Скролимо до форми "Book A Table" (якщо потрібно) або просто шукаємо поля
-    // Використовуємо плейсхолдери, які видно на твоєму скриншоті
-    await page.getByPlaceholder('Your name').fill('Богдан Лесняк');
-    await page.getByPlaceholder('+91 XXXXX XXXXX').fill('+380991234567');
-
-    // 3. Вибираємо дату та час (вибираємо перші доступні значення в селектах)
-    // Оскільки на скриншоті видно випадаючі списки (Select a time, Number of guests)
-    await page.locator('select').nth(0).selectOption({ index: 1 }); // Time Slot
-    await page.locator('select').nth(1).selectOption({ index: 1 }); // Number of Guests
-    await page.locator('select').nth(2).selectOption({ index: 1 }); // Dining Preference
-
-    // 4. Натискаємо кнопку бронювання
-    const reserveButton = page.locator('button', { hasText: 'RESERVE MY TABLE' });
-    await reserveButton.click();
-
-    // 5. Перевіряємо результат
-    // Після натискання має з'явитися або повідомлення про успіх, 
-    // або нас має перекинути на підтвердження. 
-    // Перевіримо, що кнопка стала неактивною або з'явився текст подяки
-    await expect(page.locator('text=success, text=thank, text=confirmed').first()).toBeVisible({ timeout: 10000 });
-  });
-
-  // --- СЦЕНАРІЙ 3: ВАЛІДАЦІЯ ---
-  test('Сценарій 3: Перевірка помилки при неправильному паролі', async ({ page }) => {
-    await page.goto('/admin');
-    await page.locator('input[type="email"]').fill('admin@tandoor.com');
-    await page.locator('#loginPassword').fill('wrong_password');
-    await page.locator('button', { hasText: 'Sign In' }).click();
-    await expect(page.locator('#loginPassword')).toBeVisible();
-  });
+        res.json({
+            orders: formattedOrders,
+            pagination: { page, limit, total, pages: Math.ceil(total / limit) }
+        });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch orders' });
+    }
 });
+
+// Створення замовлення (публічне)
+router.post('/', async (req, res) => {
+    const { customer_name, phone, items, total } = req.body;
+
+    if (!customer_name || !phone || !items || !total) {
+        return res.status(400).json({ error: 'Required fields missing' });
+    }
+
+    try {
+        const db = getDb();
+        const result = db.prepare(`
+            INSERT INTO orders (customer_name, phone, items_json, total, status)
+            VALUES (?, ?, ?, ?, 'received')
+        `).run(customer_name, phone, JSON.stringify(items), total);
+
+        res.status(201).json({ id: result.lastInsertRowid, message: 'Order created' });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to create order' });
+    }
+});
+
+module.exports = router;

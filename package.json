@@ -3,8 +3,14 @@
   "version": "1.0.0",
   "description": "Tandoor Kitchen — Full Stack Restaurant Management",
   "main": "server.js",
+  "type": "module",
   "scripts": {
     "start": "node server.js",
+    "dev": "node server.js",
+    "build": "echo 'Building artifacts...' && rm -rf dist && mkdir -p dist && cp -r public/* dist/ 2>/dev/null || true",
+    "preview": "node server.js",
+    "lint": "eslint . --fix",
+    "format": "prettier --write \"**/*.{js,json,css}\"",
     "test:unit": "vitest run",
     "test:unit:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
@@ -22,8 +28,12 @@
     "uuid": "^11.1.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.0.0",
     "@playwright/test": "^1.59.1",
     "@vitest/coverage-v8": "^4.1.4",
+    "eslint": "^9.0.0",
+    "globals": "^15.0.0",
+    "prettier": "^3.0.0",
     "supertest": "^7.2.2",
     "vitest": "^4.1.4"
   }

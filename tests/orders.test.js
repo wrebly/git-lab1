@@ -3,11 +3,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import express from 'express';
 
-// 1. Намагаємось замокати БД
 vi.mock('../database', () => ({ getDb: vi.fn() }));
 vi.mock('../database.js', () => ({ getDb: vi.fn() }));
 
-// 2. Мокаємо мідлвари авторизації
+
 const fakeAuth = {
   authenticate: (req, res, next) => {
     req.user = { id: 99, role: 'admin' };
@@ -21,7 +20,7 @@ vi.mock('../middleware/auth.js', () => fakeAuth);
 import ordersRouter from '../routes/orders.js';
 import { getDb } from '../database.js';
 
-// 3. Бронебійний обхід авторизації
+
 ordersRouter.stack.forEach(layer => {
   if (layer.route) {
     layer.route.stack.forEach(routeLayer => {
@@ -132,9 +131,8 @@ describe('Orders API (Unit Tests)', () => {
     expect(res.status).toBe(200);
   });
 
-  // --- ТЕСТ 7 (Тестуємо catch блок для 100% покриття) ---
+  // --- ТЕСТ 7 ---
   it('GET / - обробляє пошкоджений JSON у базі даних (catch block)', async () => {
-    // Якщо мок працює, ми імітуємо повернення "зламаного" тексту {bad_json замість нормального масиву
     if (vi.isMockFunction(getDb)) {
       const mockGet = vi.fn().mockReturnValue({ total: 1 });
       const mockAll = vi.fn().mockReturnValue([
