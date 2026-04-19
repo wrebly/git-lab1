@@ -1,56 +1,57 @@
-const express = require('express');
-const { getDb } = require('../database');
-const { authenticate, logActivity } = require('../middleware/auth');
-const router = express.Router();
+// tests/admin.spec.js
+import { test, expect } from '@playwright/test';
 
-router.post('/', authenticate, (req, res) => {
-  const { customer_name, phone, address, order_type, items, subtotal, tax, delivery_fee, discount, total, payment_method } = req.body;
-  if (!customer_name || !phone || !items || !total) return res.status(400).json({ error: 'Required fields missing' });
-  const db = getDb();
-  const orderNumber = 'ORD-' + Date.now().toString().slice(-8);
-  const result = db.prepare(`INSERT INTO orders (order_number,customer_name,phone,address,order_type,items_json,subtotal,tax,delivery_fee,discount,total,payment_method) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(orderNumber,customer_name,phone,address||null,order_type||'dine_in',JSON.stringify(items),subtotal||total,tax||0,delivery_fee||0,discount||0,total,payment_method||'cash');
-  logActivity(req.user.id,'order_created','order',result.lastInsertRowid,orderNumber,req.ip);
-  res.status(201).json({ message: 'Order created', order_number: orderNumber, id: result.lastInsertRowid });
+test.describe('Наскрізні E2E тести (Критичний шлях)', () => {
+  
+  test.use({ baseURL: 'http://localhost:3000' });
+
+  // --- СЦЕНАРІЙ 1: АВТОРИЗАЦІЯ (Адмінка) ---
+  test('Сценарій 1: Успішна авторизація власника', async ({ page }) => {
+    await page.goto('/admin');
+    await page.locator('input[type="email"]').fill('admin@tandoor.com');
+    await page.locator('#loginPassword').fill('password123');
+
+    await Promise.all([
+      page.waitForResponse(res => res.url().includes('/api/auth') && res.status() === 200),
+      page.locator('button', { hasText: 'Sign In' }).click(),
+    ]);
+
+    await expect(page.locator('#loginPassword')).toBeHidden({ timeout: 10000 });
+  });
+
+  // --- СЦЕНАРІЙ 2: БРОНЮВАННЯ (Твій критичний шлях) ---
+  test('Сценарій 2: Успішне бронювання столика клієнтом', async ({ page }) => {
+    // 1. Відкриваємо головну сторінку
+    await page.goto('/');
+
+    // 2. Скролимо до форми "Book A Table" (якщо потрібно) або просто шукаємо поля
+    // Використовуємо плейсхолдери, які видно на твоєму скриншоті
+    await page.getByPlaceholder('Your name').fill('Богдан Лесняк');
+    await page.getByPlaceholder('+91 XXXXX XXXXX').fill('+380991234567');
+
+    // 3. Вибираємо дату та час (вибираємо перші доступні значення в селектах)
+    // Оскільки на скриншоті видно випадаючі списки (Select a time, Number of guests)
+    await page.locator('select').nth(0).selectOption({ index: 1 }); // Time Slot
+    await page.locator('select').nth(1).selectOption({ index: 1 }); // Number of Guests
+    await page.locator('select').nth(2).selectOption({ index: 1 }); // Dining Preference
+
+    // 4. Натискаємо кнопку бронювання
+    const reserveButton = page.locator('button', { hasText: 'RESERVE MY TABLE' });
+    await reserveButton.click();
+
+    // 5. Перевіряємо результат
+    // Після натискання має з'явитися або повідомлення про успіх, 
+    // або нас має перекинути на підтвердження. 
+    // Перевіримо, що кнопка стала неактивною або з'явився текст подяки
+    await expect(page.locator('text=success, text=thank, text=confirmed').first()).toBeVisible({ timeout: 10000 });
+  });
+
+  // --- СЦЕНАРІЙ 3: ВАЛІДАЦІЯ ---
+  test('Сценарій 3: Перевірка помилки при неправильному паролі', async ({ page }) => {
+    await page.goto('/admin');
+    await page.locator('input[type="email"]').fill('admin@tandoor.com');
+    await page.locator('#loginPassword').fill('wrong_password');
+    await page.locator('button', { hasText: 'Sign In' }).click();
+    await expect(page.locator('#loginPassword')).toBeVisible();
+  });
 });
-
-router.get('/', authenticate, (req, res) => {
-  const db = getDb();
-  const { status, type, date, page=1, limit=50, search } = req.query;
-  let query = 'SELECT * FROM orders WHERE 1=1';
-  const params = [];
-  if (status && status!=='all') { query+=' AND status=?'; params.push(status); }
-  if (type && type!=='all') { query+=' AND order_type=?'; params.push(type); }
-  if (date) { query+=' AND DATE(created_at)=?'; params.push(date); }
-  if (search) { query+=' AND (customer_name LIKE ? OR phone LIKE ? OR order_number LIKE ?)'; params.push('%'+search+'%','%'+search+'%','%'+search+'%'); }
-  const total_count = db.prepare(query.replace('SELECT *','SELECT COUNT(*) as total')).get(...params).total;
-  query+=' ORDER BY created_at DESC LIMIT ? OFFSET ?';
-  params.push(parseInt(limit),(parseInt(page)-1)*parseInt(limit));
-  const orders = db.prepare(query).all(...params);
-  orders.forEach(o => { try { o.items=JSON.parse(o.items_json); } catch(e){ o.items=[]; } });
-  res.json({ orders, pagination: { page:parseInt(page), limit:parseInt(limit), total:total_count, pages:Math.ceil(total_count/parseInt(limit)) } });
-});
-
-router.get('/:id', authenticate, (req, res) => {
-  const db = getDb();
-  const order = db.prepare('SELECT * FROM orders WHERE id=?').get(req.params.id);
-  if (!order) return res.status(404).json({ error: 'Order not found' });
-  try { order.items=JSON.parse(order.items_json); } catch(e){ order.items=[]; }
-  res.json({ order });
-});
-
-router.put('/:id', authenticate, (req, res) => {
-  const { status, payment_status, payment_method, staff_notes } = req.body;
-  const db = getDb();
-  db.prepare(`UPDATE orders SET status=COALESCE(?,status),payment_status=COALESCE(?,payment_status),payment_method=COALESCE(?,payment_method),staff_notes=COALESCE(?,staff_notes),updated_at=datetime('now') WHERE id=?`).run(status||null,payment_status||null,payment_method||null,staff_notes||null,req.params.id);
-  logActivity(req.user.id,'order_updated','order',req.params.id,'Status: '+status,req.ip);
-  res.json({ message: 'Order updated' });
-});
-
-router.delete('/:id', authenticate, (req, res) => {
-  const db = getDb();
-  db.prepare('DELETE FROM orders WHERE id=?').run(req.params.id);
-  logActivity(req.user.id,'order_deleted','order',req.params.id,null,req.ip);
-  res.json({ message: 'Order deleted' });
-});
-
-module.exports = router;
