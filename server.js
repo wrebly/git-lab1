@@ -14,7 +14,11 @@ const PORT = process.env.PORT || 3000;
 
 initialize();
 
-// ─── added some rows───
+// ─── added some rows ───
+// ЦІ ТРИ РЯДКИ КРИТИЧНО ВАЖЛИВІ ДЛЯ БЕКЕНДУ:
+app.use(express.json()); // Дозволяє серверу читати { email, password } з req.body
+app.use(cookieParser()); // Дозволяє серверу читати токени з кукісів
+app.use(cors());         // Дозволяє фронтенду спілкуватися з бекендом
 
 // ─── Static Files ───
 app.use('/', express.static(path.join(__dirname, 'public')));
@@ -48,16 +52,16 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`
   ╔═══════════════════════════════════════════════╗
-  ║      🔥  TANDOOR KITCHEN SERVER  🔥          ║
+  ║      🔥  TANDOOR KITCHEN SERVER  🔥           ║
   ║                                               ║
-  ║   Website:  http://localhost:${PORT}             ║
+  ║   Website:  http://localhost:${PORT}              ║
   ║   Admin:    http://localhost:${PORT}/admin        ║
   ║   API:      http://localhost:${PORT}/api          ║
   ║                                               ║
   ║   Default Login:                              ║
-  ║   Email:    ....@gmail.com           ║
-  ║   Password: ....
-  ║
+  ║   Email:    admin@tandoor.com                 ║
+  ║   Password: password123                       ║
+  ║                                               ║
   ╚═══════════════════════════════════════════════╝
   `);
 });
